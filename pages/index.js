@@ -1,7 +1,7 @@
 import Head from "next/head"
 import Image from "next/image"
 import styles from "../styles/Home.module.css"
-
+import ManualHeader from "../components/ManualHeader"
 export default function Home() {
     return (
         <div className={styles.container}>
@@ -10,7 +10,7 @@ export default function Home() {
                 <meta name="description" content="Decentralized Lottery" />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            Hello!
+            <ManualHeader />
         </div>
     )
 }
