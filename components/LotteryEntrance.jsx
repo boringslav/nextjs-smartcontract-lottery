@@ -9,13 +9,13 @@ const LotteryEntrance = () => {
     const chainId = parseInt(chainIdHex)
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
 
-    // const { runContractFunction: enterRaffle } = useWeb3Contract({
-    //     abi,
-    //     contractAddress: raffleAddress,
-    //     functionName: "enterRaffle",
-    //     params: {},
-    //     msgValue, //entranceFee
-    // })
+    const { runContractFunction: enterRaffle } = useWeb3Contract({
+        abi,
+        contractAddress: raffleAddress,
+        functionName: "enterRaffle",
+        params: {},
+        msgValue: entranceFee,
+    })
 
     const { runContractFunction: getEntranceFee } = useWeb3Contract({
         abi,
@@ -28,12 +28,23 @@ const LotteryEntrance = () => {
             //the semi is from the prettier no-semi rule
             ;(async () => {
                 const entranceFeeFromCall = (await getEntranceFee()).toString()
-                setEntranceFee(ethers.utils.formatUnits(entranceFeeFromCall, "ether"))
+                setEntranceFee(entranceFeeFromCall)
             })()
         }
     }, [isWeb3Enabled])
 
-    return <div>Entrance Fee: {entranceFee} ETH</div>
+    return (
+        <>
+            {raffleAddress ? (
+                <>
+                    <button onClick={async () => await enterRaffle()}>Enter Raffle</button>
+                    <p>Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH</p>
+                </>
+            ) : (
+                <p>No Raffle Address Detected</p>
+            )}
+        </>
+    )
 }
 
 export default LotteryEntrance
