@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react"
-import { useWeb3Contract } from "react-moralis"
-import { abi, contractAddresses } from "../constants"
-import { useMoralis } from "react-moralis"
 import { ethers } from "ethers"
+import { useWeb3Contract, useMoralis } from "react-moralis"
+import { abi, contractAddresses } from "../constants"
+import { useNotification } from "web3uikit"
+
 const LotteryEntrance = () => {
     const { chainId: chainIdHex, isWeb3Enabled } = useMoralis() //gives the hex version of the id -> moralis gets it from the connected wallet
+    const dispatch = useNotification()
+
     const [entranceFee, setEntranceFee] = useState(0)
     const chainId = parseInt(chainIdHex)
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
@@ -33,11 +36,35 @@ const LotteryEntrance = () => {
         }
     }, [isWeb3Enabled])
 
+    const handleSuccess = async (tx) => {
+        await tx.wait(1)
+        handleNewNotification(tx)
+    }
+
+    const handleNewNotification = () => {
+        dispatch({
+            type: "info",
+            message: "Transaction Complete!",
+            title: "Tx Notification",
+            position: "topR",
+            icon: "bell",
+        })
+    }
+
     return (
         <>
             {raffleAddress ? (
                 <>
-                    <button onClick={async () => await enterRaffle()}>Enter Raffle</button>
+                    <button
+                        onClick={async () =>
+                            await enterRaffle({
+                                onSuccess: handleSuccess,
+                                onError: (error) => console.error(error),
+                            })
+                        }
+                    >
+                        Enter Raffle
+                    </button>
                     <p>Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH</p>
                 </>
             ) : (
