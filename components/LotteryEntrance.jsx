@@ -14,7 +14,12 @@ const LotteryEntrance = () => {
     const chainId = parseInt(chainIdHex)
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
 
-    const { runContractFunction: enterRaffle } = useWeb3Contract({
+    const {
+        runContractFunction: enterRaffle,
+        data: enterTxResponse,
+        isLoading,
+        isFetching,
+    } = useWeb3Contract({
         abi,
         contractAddress: raffleAddress,
         functionName: "enterRaffle",
@@ -79,27 +84,36 @@ const LotteryEntrance = () => {
     }
 
     return (
-        <>
+        <div className="p-5">
+            <h1 className="py-4 px-4 font-bold text-3xl">Lottery</h1>
             {raffleAddress ? (
                 <>
                     <button
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-auto"
                         onClick={async () =>
                             await enterRaffle({
-                                onSuccess: handleSuccess, //checks if the transaction is sent to MetaMask
-                                onError: (error) => console.error(error),
+                                // onComplete:
+                                // onError:
+                                onSuccess: handleSuccess,
+                                onError: (error) => console.log(error),
                             })
                         }
+                        disabled={isLoading || isFetching}
                     >
-                        Enter Raffle
+                        {isLoading || isFetching ? (
+                            <div className="animate-spin spinner-border h-8 w-8 border-b-2 rounded-full"></div>
+                        ) : (
+                            "Enter Raffle"
+                        )}
                     </button>
-                    <p>Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH</p>
-                    <p>Number of players: {numberOfPlayers}</p>
-                    <p>Recent Winner: {recentWinner}</p>
+                    <div>Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH</div>
+                    <div>The current number of players is: {numberOfPlayers}</div>
+                    <div>The most previous winner was: {recentWinner}</div>
                 </>
             ) : (
-                <p>No Raffle Address Detected</p>
+                <div>Please connect to a supported chain </div>
             )}
-        </>
+        </div>
     )
 }
 
