@@ -7,8 +7,10 @@ import { useNotification } from "web3uikit"
 const LotteryEntrance = () => {
     const { chainId: chainIdHex, isWeb3Enabled } = useMoralis() //gives the hex version of the id -> moralis gets it from the connected wallet
     const dispatch = useNotification()
+    const [entranceFee, setEntranceFee] = useState("0")
+    const [numberOfPlayers, setNumberOfPlayers] = useState("0")
+    const [recentWinner, setRecentWinner] = useState(null)
 
-    const [entranceFee, setEntranceFee] = useState(0)
     const chainId = parseInt(chainIdHex)
     const raffleAddress = chainId in contractAddresses ? contractAddresses[chainId][0] : null
 
@@ -26,19 +28,44 @@ const LotteryEntrance = () => {
         functionName: "getEntranceFee",
         params: {},
     })
-    useEffect(() => {
+
+    const { runContractFunction: getNumberOfPlayers } = useWeb3Contract({
+        abi,
+        contractAddress: raffleAddress,
+        functionName: "getNumberOfPlayers",
+        params: {},
+    })
+
+    const { runContractFunction: getRecentWinner } = useWeb3Contract({
+        abi,
+        contractAddress: raffleAddress,
+        functionName: "getRecentWinner",
+        params: {},
+    })
+
+    const updateUi = () => {
         if (isWeb3Enabled) {
             //the semi is from the prettier no-semi rule
             ;(async () => {
                 const entranceFeeFromCall = (await getEntranceFee()).toString()
+                const numberOfPlayersFromCall = (await getNumberOfPlayers()).toString()
+                const recentWinnerFromCall = (await getRecentWinner()).toString()
+
                 setEntranceFee(entranceFeeFromCall)
+                setNumberOfPlayers(numberOfPlayersFromCall)
+                setRecentWinner(recentWinnerFromCall)
             })()
         }
+    }
+
+    useEffect(() => {
+        updateUi()
     }, [isWeb3Enabled])
 
     const handleSuccess = async (tx) => {
         await tx.wait(1)
         handleNewNotification(tx)
+        updateUi()
     }
 
     const handleNewNotification = () => {
@@ -58,7 +85,7 @@ const LotteryEntrance = () => {
                     <button
                         onClick={async () =>
                             await enterRaffle({
-                                onSuccess: handleSuccess,
+                                onSuccess: handleSuccess, //checks if the transaction is sent to MetaMask
                                 onError: (error) => console.error(error),
                             })
                         }
@@ -66,6 +93,8 @@ const LotteryEntrance = () => {
                         Enter Raffle
                     </button>
                     <p>Entrance Fee: {ethers.utils.formatUnits(entranceFee, "ether")} ETH</p>
+                    <p>Number of players: {numberOfPlayers}</p>
+                    <p>Recent Winner: {recentWinner}</p>
                 </>
             ) : (
                 <p>No Raffle Address Detected</p>
